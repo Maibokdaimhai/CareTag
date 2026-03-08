@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>ลงทะเบียน CareTag</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f0f2f5; }
+        .form-card { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        input, select, textarea { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <div class="form-card">
+        <h2>📝 ลงทะเบียนผู้ดูแลและผู้สูงอายุ</h2>
+        <form id="regForm">
+            <h4>ข้อมูลผู้ดูแล (ลูกหลาน)</h4>
+            <input type="email" id="email" placeholder="อีเมล" required>
+            <input type="text" id="p_fullname" placeholder="ชื่อ-นามสกุล ผู้ดูแล" required>
+            <input type="text" id="phone1" placeholder="เบอร์โทรศัพท์" required>
+            <input type="text" id="line_user_id" placeholder="LINE User ID (U...)" required>
+
+            <hr>
+            <h4>ข้อมูลผู้สูงอายุ</h4>
+            <input type="text" id="qr_code_slug" placeholder="รหัส Tag (เช่น Elder-001)" required>
+            <input type="text" id="elder_fname" placeholder="ชื่อผู้สูงอายุ" required>
+            <input type="text" id="elder_sname" placeholder="นามสกุล" required>
+            <select id="blood_type">
+                <option value="A">A</option><option value="B">B</option>
+                <option value="O">O</option><option value="AB">AB</option>
+            </select>
+            <textarea id="chronic_diseases" placeholder="โรคประจำตัว"></textarea>
+            <textarea id="allergies" placeholder="ประวัติการแพ้ยา"></textarea>
+            <input type="text" id="medical_rights" placeholder="สิทธิ์การรักษา (เช่น บัตรทอง)">
+
+            <button type="submit">ยืนยันการลงทะเบียน</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('regForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = {};
+            // ดึงค่าจากทุก input มาใส่ใน formData
+            document.querySelectorAll('input, select, textarea').forEach(el => {
+                formData[el.id] = el.value;
+            });
+
+            const res = await fetch('http://localhost:3000/api/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+            
+            const result = await res.json();
+            alert(result.message || result.error);
+            if(res.ok) window.location.href = 'index.html';
+        };
+    </script>
+</body>
+</html>
