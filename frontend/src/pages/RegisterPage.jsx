@@ -31,21 +31,19 @@ const RegisterPage = () => {
   useEffect(() => {
     const initLiff = async () => {
       try {
-        if (!import.meta.env.VITE_LIFF_ID) {
-          console.error("VITE_LIFF_ID is missing!");
-          return;
-        }
-
         await liff.init({ liffId: import.meta.env.VITE_LIFF_ID });
-
-        // ตรวจสอบว่า Login หรือยัง
+        
         if (liff.isLoggedIn()) {
           const profile = await liff.getProfile();
           setFormData(prev => ({ ...prev, line_user_id: profile.userId }));
         } else {
-          // แนะนำ: เช็คเพิ่มว่าไม่ใช่การวนลูปกลับมาแล้ว Error
-          // ถ้าไม่อยู่ใน LIFF Browser (เปิดใน Chrome ปกติ) ให้ Login
-          if (!liff.isInClient()) {
+          // แนะนำ: อย่าสั่ง liff.login ทันทีที่เข้าหน้าเพจ 
+          // ให้เช็คก่อนว่าเปิดใน LINE หรือเปล่า หรือรอให้ user กดปุ่มค่อย login
+          // หรือถ้าจะ auto-login ต้องระบุ redirectUri ให้ถูกต้อง 100%
+          
+          // เช็คว่าไม่ได้กำลังอยู่ในจังหวะที่กลับมาจาก LINE (เพื่อกัน loop)
+          const urlParams = new URLSearchParams(window.location.search);
+          if (!urlParams.get('code')) {
             liff.login({ redirectUri: 'https://caretagweb-1286.vercel.app/register' });
           }
         }

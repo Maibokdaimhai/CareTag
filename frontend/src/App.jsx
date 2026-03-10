@@ -10,13 +10,13 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<LoginPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/update-password" element={<UpdatePassword />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/scan/:tag_id" element={<ScanResult />} />
-        <Route path="/" element={<LoginPage />} />
       </Routes>
     </BrowserRouter>  
   );
