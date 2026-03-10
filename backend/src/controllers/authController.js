@@ -6,7 +6,7 @@ const { v4: uuidv4 } = require('uuid');
 exports.signUp = async (req, res) => {
     const { 
         email, password, p_fullname, phone1, phone2, relation, address, province, postal_code,
-        elder_fname, elder_sname, blood_type, chronic_diseases, allergies, medical_rights,
+        elder_fname, elder_mname, elder_sname, blood_type, chronic_diseases, allergies, medical_rights,
         line_user_id // <-- รับค่า ID ของผู้ดูแลที่ส่งมาจากหน้าบ้าน (สมัครสมาชิก)
     } = req.body;
 
@@ -38,7 +38,7 @@ exports.signUp = async (req, res) => {
         // 3. บันทึกข้อมูลลงตาราง Elders
         const { data: elderData, error: elderError } = await supabase
             .from('elders')
-            .insert([{ elder_fname, elder_sname, blood_type, chronic_diseases, allergies, medical_rights }])
+            .insert([{ elder_fname, elder_mname, elder_sname, blood_type, chronic_diseases, allergies, medical_rights }])
             .select().single();
         if (elderError) throw elderError;
 
