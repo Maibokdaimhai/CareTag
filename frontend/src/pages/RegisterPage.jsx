@@ -33,27 +33,43 @@ const RegisterPage = () => {
     const initLiff = async () => {
       try {
         const liffId = import.meta.env.VITE_LIFF_ID;
-        if (!liffId) return;
+        if (!liffId) {
+          setIsLiffInitializing(false);
+          return;
+        }
 
         await liff.init({ liffId });
 
-        // --- จุดตัดวงจร Loop ---
         const urlParams = new URLSearchParams(window.location.search);
-        const hasCode = urlParams.has('code') || urlParams.has('state');
+        const hasAuthParams =
+          urlParams.has('code') ||
+          urlParams.has('state') ||
+          urlParams.has('liff.state');
 
-        if (liff.isLoggedIn()) {
-          const profile = await liff.getProfile();
-          setFormData(prev => ({ ...prev, line_user_id: profile.userId }));
-        } else if (!hasCode) { 
-          // 💡 สั่ง Login เฉพาะเมื่อ "ไม่ได้อยู่ในจังหวะที่ LINE กำลังส่งเรากลับมา"
-          liff.login({ redirectUri: window.location.origin + '/register' });
+        if (!liff.isLoggedIn()) {
+          if (!hasAuthParams) {
+            liff.login({
+              redirectUri: `${window.location.origin}/register`,
+            });
+            return;
+          }
+
+          setIsLiffInitializing(false);
+          return;
         }
+
+        const profile = await liff.getProfile();
+        setFormData(prev => ({
+          ...prev,
+          line_user_id: profile.userId,
+        }));
       } catch (err) {
-        console.error("LIFF Init failed", err);
+        console.error('LIFF Init failed', err);
       } finally {
-        setIsLiffInitializing(false); // หยุด Loading เมื่อจัดการทุกอย่างเสร็จ
+        setIsLiffInitializing(false);
       }
     };
+
     initLiff();
   }, []);
 
