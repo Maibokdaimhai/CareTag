@@ -1,48 +1,59 @@
-import React, { useEffect, useState, useRef } from 'react'; // เพิ่ม useRef
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { Phone, AlertTriangle, Heart, Ambulance, MapPin, HelpCircle } from 'lucide-react';
+import liff from '@line/liff'; // 1. Import LIFF
 
 const ScanResult = () => {
     const { tag_id } = useParams();
     const [elder, setElder] = useState(null);
     const [loading, setLoading] = useState(true);
     const [step, setStep] = useState('selection');
+    const [lineUserId, setLineUserId] = useState(null); // เก็บ Line ID ของผู้ช่วย
+    const [helperPhone, setHelperPhone] = useState('');
     
-    // ใช้ useRef เพื่อป้องกันการรัน API ซ้ำใน Strict Mode
     const hasFetched = useRef(false);
 
     useEffect(() => {
-        // ถ้าเคยรันไปแล้ว ให้หยุดทำงาน (ป้องกัน Log ซ้ำ 2 รอบ)
         if (hasFetched.current) return;
 
-        const fetchPublicData = async () => {
+        const initLiffAndFetch = async () => {
             try {
-                // ดึงข้อมูลผู้สูงอายุ (ขั้นตอนนี้ Backend จะสร้าง Log เริ่มต้นที่มีสถานะ 'scanned')
+                // 2. Initialize LIFF
+                await liff.init({ liffId: import.meta.env.VITE_LIFF_ID }); 
+                
+                if (!liff.isLoggedIn()) {
+                    liff.login(); // ถ้ายังไม่ Login ให้เด้งไปหน้า Login ของ LINE
+                } else {
+                    const profile = await liff.getProfile();
+                    setLineUserId(profile.userId); // ดึง Line User ID ของคนที่สแกน
+                }
+
+                // 3. ดึงข้อมูลผู้สูงอายุตามปกติ
                 const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/auth/scan/${tag_id}`);
                 setElder(res.data);
-                hasFetched.current = true; // มาร์คว่าดึงข้อมูลและสร้าง Log สำเร็จแล้ว
+                hasFetched.current = true;
             } catch (err) {
-                console.error("Fetch Error:", err);
+                console.error("LIFF/Fetch Error:", err);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchPublicData();
+        initLiffAndFetch();
     }, [tag_id]);
 
-    const [helperPhone, setHelperPhone] = useState('');
-    // ฟังก์ชันจัดการตอนกดปุ่มเลือกเหตุการณ์
     const handleIncidentReport = (type) => {
         const sendData = async (lat = null, lng = null) => {
             try {
+                // 4. ส่งข้อมูลแจ้งเหตุ พร้อม lineUserId ของผู้สแกน
                 await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/report-emergency`, {
                     elder_id: elder.elder_id,
                     lat: lat,
                     lng: lng,
                     incident_type: type,
-                    helper_phone: helperPhone // ส่งเบอร์ผู้ช่วยไปด้วย
+                    helper_phone: helperPhone,
+                    line_user_id: lineUserId // ส่ง ID นี้ไปให้ Backend เพื่อใช้ยิง Push Message กลับหาผู้ช่วยหรือบันทึก Log
                 });
             } catch (err) {
                 console.error("API Error:", err);
@@ -65,6 +76,8 @@ const ScanResult = () => {
         }
     };
 
+    if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50 text-red-500 font-bold">กำลังเตรียมข้อมูล... (LINE Auth)</div>;
+    if (!elder) return <div className="min-h-screen flex items-center justify-center bg-gray-50 text-red-500 font-bold">❌ ไม่พบข้อมูลในระบบ</div>;
     // ในส่วน return UI หน้าจอ 'selection'
     if (step === 'selection') {
         return (

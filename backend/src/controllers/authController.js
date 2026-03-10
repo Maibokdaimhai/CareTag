@@ -6,7 +6,8 @@ const { v4: uuidv4 } = require('uuid');
 exports.signUp = async (req, res) => {
     const { 
         email, password, p_fullname, phone1, phone2, relation, address, province, postal_code,
-        elder_fname, elder_sname, blood_type, chronic_diseases, allergies, medical_rights
+        elder_fname, elder_sname, blood_type, chronic_diseases, allergies, medical_rights,
+        line_user_id // <-- รับค่า ID ของผู้ดูแลที่ส่งมาจากหน้าบ้าน (สมัครสมาชิก)
     } = req.body;
 
     try {
@@ -15,7 +16,7 @@ exports.signUp = async (req, res) => {
         if (authError) throw authError;
         const userId = authData.user.id;
 
-        // 2. บันทึกข้อมูลลงตาราง Profiles (ผู้ดูแล)
+        // 2. บันทึกข้อมูลลงตาราง Profiles (เพิ่ม line_user_id ของผู้ดูแลเข้าไปด้วย)
         const { error: profileError } = await supabase
             .from('profiles')
             .insert([{ 
@@ -27,32 +28,28 @@ exports.signUp = async (req, res) => {
                 relation, 
                 address, 
                 province, 
-                postal_code 
+                postal_code,
+                line_user_id // <-- บันทึก ID ของผู้ดูแลลงฐานข้อมูลที่นี่!
             }]);
         if (profileError) throw profileError;
 
-        // 3. บันทึกข้อมูลลงตาราง Elders (ผู้สูงอายุ)
+        // ... (ส่วนบันทึกข้อมูล Elders และ elders_contacts เหมือนเดิมที่คุณเขียนไว้) ...
+        
+        // 3. บันทึกข้อมูลลงตาราง Elders
         const { data: elderData, error: elderError } = await supabase
             .from('elders')
-            .insert([{ 
-                elder_fname, elder_sname, blood_type, chronic_diseases, allergies, medical_rights
-            }])
-            .select()
-            .single();
+            .insert([{ elder_fname, elder_sname, blood_type, chronic_diseases, allergies, medical_rights }])
+            .select().single();
         if (elderError) throw elderError;
 
-        // 4. เชื่อมความสัมพันธ์ใน Junction Table (elders_contacts)
+        // 4. เชื่อมความสัมพันธ์
         const { error: junctionError } = await supabase
             .from('elders_contacts')
-            .insert([{ 
-                profile_id: userId, 
-                elder_id: elderData.elder_id 
-            }]);
+            .insert([{ profile_id: userId, elder_id: elderData.elder_id }]);
         if (junctionError) throw junctionError;
 
-        res.json({ message: 'ลงทะเบียนและเชื่อมโยงข้อมูลสำเร็จ!' });
+        res.json({ message: 'ลงทะเบียนสำเร็จ และผูกบัญชี LINE เรียบร้อย!' });
     } catch (err) {
-        console.error("Signup Error:", err.message);
         res.status(400).json({ error: err.message });
     }
 };
