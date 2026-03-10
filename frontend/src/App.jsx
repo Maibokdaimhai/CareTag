@@ -18,7 +18,7 @@ const LiffRedirectHandler = () => {
     const liffState = params.get('liff.state');
 
     if (liffState) {
-      // ส่ง query ทั้งก้อนไปด้วย เพื่อไม่ให้ code/state หาย
+      // กัน query หายตอน callback จาก LINE
       navigate(`${liffState}${location.search}`, { replace: true });
       return;
     }
@@ -44,12 +44,19 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* หน้า root สำหรับรับ LIFF callback */}
         <Route path="/" element={<LiffRedirectHandler />} />
+
+        {/* auth pages */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/update-password" element={<UpdatePassword />} />
+
+        {/* app pages */}
         <Route path="/dashboard" element={<Dashboard />} />
+
+        {/* public scan page */}
         <Route path="/scan/:tag_id" element={<ScanResult />} />
       </Routes>
     </BrowserRouter>
