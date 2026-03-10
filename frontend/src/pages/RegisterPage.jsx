@@ -45,7 +45,7 @@ const RegisterPage = () => {
           setFormData(prev => ({ ...prev, line_user_id: profile.userId }));
         } else {
           // ถ้าเปิดใน Browser ปกติ มันจะพาไปหน้า Login ของ LINE
-          liff.login({ redirectUri: window.location.href }); 
+          liff.login({ redirectUri: 'https://caretagweb-1286.vercel.app/register' }); 
         }
       } catch (err) {
         console.error("LIFF Error:", err);
