@@ -31,17 +31,24 @@ const RegisterPage = () => {
   useEffect(() => {
     const initLiff = async () => {
       try {
-        await liff.init({ liffId: import.meta.env.VITE_LIFF_ID }); // ใช้ ID จาก Vercel Env
+        // ตรวจสอบว่า VITE_LIFF_ID มาจริงไหม
+        if (!import.meta.env.VITE_LIFF_ID) {
+            console.error("VITE_LIFF_ID is missing!");
+            return;
+        }
+        
+        await liff.init({ liffId: import.meta.env.VITE_LIFF_ID });
+        
         if (liff.isLoggedIn()) {
           const profile = await liff.getProfile();
-          // บันทึก ID ลงใน formData ทันที
+          // ใช้คำสั่งนี้เพื่อให้ State อัปเดตแน่นอน
           setFormData(prev => ({ ...prev, line_user_id: profile.userId }));
         } else {
-          // ถ้าเปิดผ่าน Browser อื่น ให้บังคับ Login LINE ก่อนสมัคร
-          liff.login();
+          // ถ้าเปิดใน Browser ปกติ มันจะพาไปหน้า Login ของ LINE
+          liff.login({ redirectUri: window.location.href }); 
         }
       } catch (err) {
-        console.error("LIFF Initialization failed", err);
+        console.error("LIFF Error:", err);
       }
     };
     initLiff();
