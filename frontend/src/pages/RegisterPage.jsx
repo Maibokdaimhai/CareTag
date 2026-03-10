@@ -32,20 +32,21 @@ const RegisterPage = () => {
     const initLiff = async () => {
       try {
         const liffId = import.meta.env.VITE_LIFF_ID;
-        if (!liffId) {
-          console.error("VITE_LIFF_ID is missing in Env!");
-          return; // หยุดทำงานถ้าไม่มี ID เพื่อไม่ให้จอขาว
-        }
+        if (!liffId) return;
 
         await liff.init({ liffId });
-        
+
+        // ตรวจสอบสถานะก่อนสั่ง Login ซ้ำ
         if (liff.isLoggedIn()) {
           const profile = await liff.getProfile();
           setFormData(prev => ({ ...prev, line_user_id: profile.userId }));
         } else {
-          // เช็คว่าไม่ได้เปิดในแอป LINE ให้ Login (เฉพาะตอนที่ไม่ได้เพิ่งกลับมาจาก LINE)
-          const params = new URLSearchParams(window.location.search);
-          if (!params.get('code')) {
+          // เช็ค URL ว่ามีคำว่า 'code' หรือ 'state' (ที่ LINE ส่งมา) ไหม
+          const urlParams = new URLSearchParams(window.location.search);
+          const isReturningFromLine = urlParams.has('code') || urlParams.has('state');
+
+          // ถ้ายังไม่ได้ Login และไม่ได้กำลัง Redirect กลับมา ให้ Login
+          if (!isReturningFromLine) {
             liff.login({ redirectUri: window.location.origin + '/register' });
           }
         }
