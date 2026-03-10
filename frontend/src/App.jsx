@@ -18,7 +18,8 @@ const LiffRedirectHandler = () => {
     const liffState = params.get('liff.state');
 
     if (liffState) {
-      navigate(liffState, { replace: true });
+      // ส่ง query ทั้งก้อนไปด้วย เพื่อไม่ให้ code/state หาย
+      navigate(`${liffState}${location.search}`, { replace: true });
       return;
     }
 

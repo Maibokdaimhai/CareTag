@@ -33,33 +33,32 @@ const RegisterPage = () => {
     const initLiff = async () => {
       try {
         const liffId = import.meta.env.VITE_LIFF_ID;
-        console.log("LIFF_ID =", liffId);
-        console.log("current url =", window.location.href);
-
-        await liff.init({
-          liffId,
-          withLoginOnExternalBrowser: true,
-        });
-
-        console.log("liff.init done");
-        console.log("isLoggedIn =", liff.isLoggedIn());
-
-        if (!liff.isLoggedIn()) {
+        if (!liffId) {
           setIsLiffInitializing(false);
           return;
         }
 
-        const profile = await liff.getProfile();
-        console.log("profile =", profile);
+        await liff.init({ liffId });
 
-        setFormData((prev) => ({
-          ...prev,
-          line_user_id: profile.userId,
-        }));
+        const urlParams = new URLSearchParams(window.location.search);
+        const hasCallbackParams =
+          urlParams.has('code') ||
+          urlParams.has('state') ||
+          urlParams.has('liff.state');
+
+        if (liff.isLoggedIn()) {
+          const profile = await liff.getProfile();
+          setFormData(prev => ({
+            ...prev,
+            line_user_id: profile.userId,
+          }));
+        } else if (!hasCallbackParams) {
+          liff.login({ redirectUri: `${window.location.origin}/register` });
+          return;
+        }
       } catch (err) {
         console.error("LIFF Init failed", err);
       } finally {
-        console.log("stop spinner");
         setIsLiffInitializing(false);
       }
     };
