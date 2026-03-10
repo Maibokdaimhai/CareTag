@@ -33,39 +33,33 @@ const RegisterPage = () => {
     const initLiff = async () => {
       try {
         const liffId = import.meta.env.VITE_LIFF_ID;
-        if (!liffId) {
-          setIsLiffInitializing(false);
-          return;
-        }
+        console.log("LIFF_ID =", liffId);
+        console.log("current url =", window.location.href);
 
-        await liff.init({ liffId });
+        await liff.init({
+          liffId,
+          withLoginOnExternalBrowser: true,
+        });
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const hasAuthParams =
-          urlParams.has('code') ||
-          urlParams.has('state') ||
-          urlParams.has('liff.state');
+        console.log("liff.init done");
+        console.log("isLoggedIn =", liff.isLoggedIn());
 
         if (!liff.isLoggedIn()) {
-          if (!hasAuthParams) {
-            liff.login({
-              redirectUri: `${window.location.origin}/register`,
-            });
-            return;
-          }
-
           setIsLiffInitializing(false);
           return;
         }
 
         const profile = await liff.getProfile();
-        setFormData(prev => ({
+        console.log("profile =", profile);
+
+        setFormData((prev) => ({
           ...prev,
           line_user_id: profile.userId,
         }));
       } catch (err) {
-        console.error('LIFF Init failed', err);
+        console.error("LIFF Init failed", err);
       } finally {
+        console.log("stop spinner");
         setIsLiffInitializing(false);
       }
     };
