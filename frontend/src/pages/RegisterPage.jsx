@@ -31,21 +31,23 @@ const RegisterPage = () => {
   useEffect(() => {
     const initLiff = async () => {
       try {
-        // ตรวจสอบว่า VITE_LIFF_ID มาจริงไหม
         if (!import.meta.env.VITE_LIFF_ID) {
-            console.error("VITE_LIFF_ID is missing!");
-            return;
+          console.error("VITE_LIFF_ID is missing!");
+          return;
         }
-        
+
         await liff.init({ liffId: import.meta.env.VITE_LIFF_ID });
-        
+
+        // ตรวจสอบว่า Login หรือยัง
         if (liff.isLoggedIn()) {
           const profile = await liff.getProfile();
-          // ใช้คำสั่งนี้เพื่อให้ State อัปเดตแน่นอน
           setFormData(prev => ({ ...prev, line_user_id: profile.userId }));
         } else {
-          // ถ้าเปิดใน Browser ปกติ มันจะพาไปหน้า Login ของ LINE
-          liff.login({ redirectUri: 'https://caretagweb-1286.vercel.app/register' }); 
+          // แนะนำ: เช็คเพิ่มว่าไม่ใช่การวนลูปกลับมาแล้ว Error
+          // ถ้าไม่อยู่ใน LIFF Browser (เปิดใน Chrome ปกติ) ให้ Login
+          if (!liff.isInClient()) {
+            liff.login({ redirectUri: 'https://caretagweb-1286.vercel.app/register' });
+          }
         }
       } catch (err) {
         console.error("LIFF Error:", err);
