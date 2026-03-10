@@ -16,9 +16,9 @@ function App() {
         <Route path="/update-password" element={<UpdatePassword />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/scan/:tag_id" element={<ScanResult />} />
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<LoginPage />} />
       </Routes>
-    </BrowserRouter>
+    </BrowserRouter>  
   );
 }
 
