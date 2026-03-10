@@ -1,4 +1,11 @@
-// App.jsx
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import ForgotPassword from './pages/ForgotPassword';
+import UpdatePassword from './pages/UpdatePassword';
+import Dashboard from './pages/Dashboard';
+import ScanResult from './pages/ScanResult';
+
 function App() {
   return (
     <BrowserRouter>
