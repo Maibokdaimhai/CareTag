@@ -78,7 +78,10 @@ const LoginPage = () => {
 
           <div className="text-center pt-4">
             <p className="text-sm text-gray-500">
-              ยังไม่มีบัญชีสมาชิก? <a href="/register" className="text-green-600 font-bold hover:underline">ลงทะเบียนที่นี่</a>
+              ยังไม่มีบัญชีสมาชิก? 
+              <Link to="/register" className="text-green-600 font-bold hover:underline">
+                ลงทะเบียนที่นี่
+              </Link>
             </p>
           </div>
         </form>
