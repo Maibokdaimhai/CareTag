@@ -288,10 +288,11 @@ exports.updatePassword = async (req, res) => {
     }
 };
 
-// เพิ่มฟังก์ชันสำหรับเพิ่มผู้สูงอายุคนใหม่ (ไม่ต้องสมัคร User ใหม่)
 exports.addElder = async (req, res) => {
     try {
-        const userId = req.user.id; // มาจาก Middleware ตรวจสอบ Token
+        const userId = req.user.id; // ตรวจสอบให้แน่ใจว่า Middleware ส่ง ID มาถูกต้อง
+        
+        // รับค่าและป้องกันค่า undefined ด้วยการใส่ || null หรือ || ""
         const { 
             elder_fname, elder_mname, elder_sname, 
             blood_type, chronic_diseases, allergies, medical_rights 
@@ -301,22 +302,38 @@ exports.addElder = async (req, res) => {
         const { data: elderData, error: elderError } = await supabase
             .from('elders')
             .insert([{ 
-                elder_fname, elder_mname, elder_sname, 
-                blood_type, chronic_diseases, allergies, medical_rights 
+                elder_fname, 
+                elder_mname: elder_mname || null, 
+                elder_sname, 
+                blood_type: blood_type || 'A', 
+                chronic_diseases: chronic_diseases || null, 
+                allergies: allergies || null, 
+                medical_rights: medical_rights || null
             }])
-            .select().single();
+            .select(); // เอา .single() ออกก่อนเพื่อเช็ค Error
 
-        if (elderError) throw elderError;
+        if (elderError) {
+            console.error("DEBUG: Elder Insert Error ->", elderError.message);
+            throw new Error(`สร้างข้อมูลผู้สูงอายุไม่สำเร็จ: ${elderError.message}`);
+        }
 
-        // 2. สร้างความสัมพันธ์ในตาราง elders_contacts
+        const newElder = elderData[0];
+
+        // 2. สร้างความสัมพันธ์ (ตรวจสอบ userId ว่ามีค่า)
+        if (!userId) throw new Error("ไม่พบ ID ผู้ดูแลในระบบ");
+
         const { error: junctionError } = await supabase
             .from('elders_contacts')
-            .insert([{ profile_id: userId, elder_id: elderData.elder_id }]);
+            .insert([{ profile_id: userId, elder_id: newElder.elder_id }]);
 
-        if (junctionError) throw junctionError;
+        if (junctionError) {
+            console.error("DEBUG: Junction Error ->", junctionError.message);
+            throw new Error(`เชื่อมโยงผู้ดูแลไม่สำเร็จ: ${junctionError.message}`);
+        }
 
-        res.json({ message: 'เพิ่มข้อมูลผู้สูงอายุสำเร็จ', elder: elderData });
+        res.json({ message: 'เพิ่มข้อมูลผู้สูงอายุสำเร็จ', elder: newElder });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error("DEBUG: Catch Block ->", err.message);
+        res.status(400).json({ error: err.message });
     }
 };
