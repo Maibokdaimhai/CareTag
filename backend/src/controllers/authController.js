@@ -290,15 +290,20 @@ exports.updatePassword = async (req, res) => {
 
 exports.addElder = async (req, res) => {
     try {
-        const userId = req.user.id; // ตรวจสอบให้แน่ใจว่า Middleware ส่ง ID มาถูกต้อง
-        
-        // รับค่าและป้องกันค่า undefined ด้วยการใส่ || null หรือ || ""
+        const userId = req.user?.id; // ตรวจสอบว่า middleware ส่งค่ามาจริง
+        if (!userId) throw new Error("กรูณาล็อกอินใหม่ (Unauthorized)");
+
         const { 
             elder_fname, elder_mname, elder_sname, 
             blood_type, chronic_diseases, allergies, medical_rights 
         } = req.body;
 
-        // 1. บันทึกข้อมูลลงตาราง elders
+        // 1. ตรวจสอบฟิลด์ที่ห้ามเป็น NULL ตาม Schema (fname และ sname)
+        if (!elder_fname || !elder_sname) {
+            throw new Error("กรุณากรอกชื่อและนามสกุลผู้สูงอายุ");
+        }
+
+        // 2. บันทึกข้อมูลลงตาราง elders
         const { data: elderData, error: elderError } = await supabase
             .from('elders')
             .insert([{ 
@@ -308,32 +313,37 @@ exports.addElder = async (req, res) => {
                 blood_type: blood_type || 'A', 
                 chronic_diseases: chronic_diseases || null, 
                 allergies: allergies || null, 
-                medical_rights: medical_rights || null
+                medical_rights: medical_rights || null,
+                e_status: 'active' // เพิ่มค่าเริ่มต้นตาม schema
             }])
-            .select(); // เอา .single() ออกก่อนเพื่อเช็ค Error
+            .select()
+            .single(); // กลับมาใช้ single เพื่อความง่ายในการจัดการตัวแปรเดียว
 
         if (elderError) {
-            console.error("DEBUG: Elder Insert Error ->", elderError.message);
-            throw new Error(`สร้างข้อมูลผู้สูงอายุไม่สำเร็จ: ${elderError.message}`);
+            console.error("Supabase Error (Elders):", elderError.message);
+            throw new Error(`Database Error (Elders): ${elderError.message}`);
         }
 
-        const newElder = elderData[0];
-
-        // 2. สร้างความสัมพันธ์ (ตรวจสอบ userId ว่ามีค่า)
-        if (!userId) throw new Error("ไม่พบ ID ผู้ดูแลในระบบ");
-
+        // 3. เชื่อมความสัมพันธ์ในตาราง elders_contacts
         const { error: junctionError } = await supabase
             .from('elders_contacts')
-            .insert([{ profile_id: userId, elder_id: newElder.elder_id }]);
+            .insert([{ 
+                profile_id: userId, 
+                elder_id: elderData.elder_id 
+            }]);
 
         if (junctionError) {
-            console.error("DEBUG: Junction Error ->", junctionError.message);
-            throw new Error(`เชื่อมโยงผู้ดูแลไม่สำเร็จ: ${junctionError.message}`);
+            console.error("Supabase Error (Junction):", junctionError.message);
+            throw new Error(`Database Error (Junction): ${junctionError.message}`);
         }
 
-        res.json({ message: 'เพิ่มข้อมูลผู้สูงอายุสำเร็จ', elder: newElder });
+        res.json({ 
+            message: 'เพิ่มข้อมูลผู้สูงอายุสำเร็จ', 
+            elder: elderData 
+        });
+
     } catch (err) {
-        console.error("DEBUG: Catch Block ->", err.message);
+        console.error("Final Error Catch:", err.message);
         res.status(400).json({ error: err.message });
     }
 };
