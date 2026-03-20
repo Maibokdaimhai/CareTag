@@ -79,28 +79,30 @@ exports.getDashboardData = async (req, res) => {
         const { data: profile } = await supabase
             .from('profiles').select('*').eq('profile_id', userId).single();
 
-        // ดึงข้อมูลผู้สูงอายุผ่านตาราง junction
+        // ดึงข้อมูลผู้สูงอายุ "ทั้งหมด" ผ่านตาราง junction (เอา .single() ออก)
         const { data: junctionData } = await supabase
             .from('elders_contacts')
             .select(`elders ( * )`)
-            .eq('profile_id', userId)
-            .single();
+            .eq('profile_id', userId);
+
+        const elders = junctionData ? junctionData.map(j => j.elders) : [];
 
         let logs = [];
-        if (junctionData?.elders) {
-            // ดึงประวัติการสแกน 5 รายการล่าสุด
+        if (elders.length > 0) {
+            // ดึงประวัติการสแกนรวมของทุกคน 10 รายการล่าสุด
+            const elderIds = elders.map(e => e.elder_id);
             const { data: logData } = await supabase
                 .from('logs')
                 .select('*')
-                .eq('elder_id', junctionData.elders.elder_id)
+                .in('elder_id', elderIds)
                 .order('scanned_at', { ascending: false })
-                .limit(5);
+                .limit(10);
             logs = logData || [];
         }
 
         res.json({ 
             profile, 
-            elder: junctionData ? junctionData.elders : null,
+            elders: elders,
             recent_logs: logs
         });
     } catch (err) {
@@ -283,5 +285,38 @@ exports.updatePassword = async (req, res) => {
         res.json({ message: 'เปลี่ยนรหัสผ่านสำเร็จ' });
     } catch (err) {
         res.status(400).json({ error: err.message });
+    }
+};
+
+// เพิ่มฟังก์ชันสำหรับเพิ่มผู้สูงอายุคนใหม่ (ไม่ต้องสมัคร User ใหม่)
+exports.addElder = async (req, res) => {
+    try {
+        const userId = req.user.id; // มาจาก Middleware ตรวจสอบ Token
+        const { 
+            elder_fname, elder_mname, elder_sname, 
+            blood_type, chronic_diseases, allergies, medical_rights 
+        } = req.body;
+
+        // 1. บันทึกข้อมูลลงตาราง elders
+        const { data: elderData, error: elderError } = await supabase
+            .from('elders')
+            .insert([{ 
+                elder_fname, elder_mname, elder_sname, 
+                blood_type, chronic_diseases, allergies, medical_rights 
+            }])
+            .select().single();
+
+        if (elderError) throw elderError;
+
+        // 2. สร้างความสัมพันธ์ในตาราง elders_contacts
+        const { error: junctionError } = await supabase
+            .from('elders_contacts')
+            .insert([{ profile_id: userId, elder_id: elderData.elder_id }]);
+
+        if (junctionError) throw junctionError;
+
+        res.json({ message: 'เพิ่มข้อมูลผู้สูงอายุสำเร็จ', elder: elderData });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 };
