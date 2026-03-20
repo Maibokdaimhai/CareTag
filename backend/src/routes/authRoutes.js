@@ -13,5 +13,6 @@ router.get('/scan/:tag_id', authController.getPublicProfile);
 router.post('/update-location', authController.updateScanLocation);
 router.post('/report-emergency', authController.updateScanLocation);
 router.put('/update-profile', authMiddleware, authController.updateProfile);
+router.post('/add-elder', authMiddleware, authController.addElder);
 
 module.exports = router;
