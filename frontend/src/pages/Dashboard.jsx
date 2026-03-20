@@ -257,26 +257,70 @@ const Dashboard = () => {
         </div>
 
         {/* Modal เพิ่มผู้สูงอายุ */}
-        {isAddingElder && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <form onSubmit={handleAddElder} className="bg-white p-8 rounded-3xl w-full max-w-md shadow-2xl space-y-4">
-              <h3 className="text-2xl font-bold text-gray-800 mb-4">เพิ่มผู้สูงอายุในดูแล</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <input required className="border p-3 rounded-xl text-sm" placeholder="ชื่อ*" value={newElder.elder_fname} onChange={e => setNewElder({...newElder, elder_fname: e.target.value})} />
-                <input required className="border p-3 rounded-xl text-sm" placeholder="นามสกุล*" value={newElder.elder_sname} onChange={e => setNewElder({...newElder, elder_sname: e.target.value})} />
+          {isAddingElder && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+              <div className="bg-white p-8 rounded-[40px] w-full max-w-xl shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+                <h3 className="text-2xl font-bold text-gray-800 mb-2">เพิ่มผู้สูงอายุในดูแล</h3>
+                
+                <div className="space-y-4">
+                  {/* แถวที่ 1: ชื่อ - ชื่อกลาง - นามสกุล */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase ml-2">ชื่อ*</label>
+                      <input required className="w-full p-3 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-green-500 outline-none transition text-sm shadow-sm" placeholder="ชื่อ" value={newElder.elder_fname} onChange={e => setNewElder({...newElder, elder_fname: e.target.value})} />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase ml-2">ชื่อกลาง</label>
+                      <input className="w-full p-3 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-green-500 outline-none transition text-sm shadow-sm" placeholder="ถ้ามี" value={newElder.elder_mname} onChange={e => setNewElder({...newElder, elder_mname: e.target.value})} />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase ml-2">นามสกุล*</label>
+                      <input required className="w-full p-3 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-green-500 outline-none transition text-sm shadow-sm" placeholder="นามสกุล" value={newElder.elder_sname} onChange={e => setNewElder({...newElder, elder_sname: e.target.value})} />
+                    </div>
+                  </div>
+
+                  {/* แถวที่ 2: กรุ๊ปเลือด และ สิทธิการรักษา */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase ml-2">กรุ๊ปเลือด</label>
+                      <select className="w-full p-3 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-green-500 outline-none transition text-sm shadow-sm bg-white" value={newElder.blood_type} onChange={e => setNewElder({...newElder, blood_type: e.target.value})}>
+                        <option value="A">Group A</option>
+                        <option value="B">Group B</option>
+                        <option value="O">Group O</option>
+                        <option value="AB">Group AB</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase ml-2">สิทธิการรักษา</label>
+                      <input className="w-full p-3 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-green-500 outline-none transition text-sm shadow-sm" placeholder="เช่น บัตรทอง, ประกันสังคม" value={newElder.medical_rights} onChange={e => setNewElder({...newElder, medical_rights: e.target.value})} />
+                    </div>
+                  </div>
+
+                  {/* แถวที่ 3: โรคประจำตัว */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase ml-2">โรคประจำตัว</label>
+                    <input className="w-full p-3 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-green-500 outline-none transition text-sm shadow-sm" placeholder="ระบุโรคประจำตัว" value={newElder.chronic_diseases} onChange={e => setNewElder({...newElder, chronic_diseases: e.target.value})} />
+                  </div>
+
+                  {/* แถวที่ 4: ประวัติการแพ้ */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase ml-2">ประวัติการแพ้ยา/อาหาร</label>
+                    <textarea className="w-full p-3 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-green-500 outline-none transition text-sm shadow-sm h-24 resize-none" placeholder="ระบุสิ่งที่แพ้และอาการ" value={newElder.allergies} onChange={e => setNewElder({...newElder, allergies: e.target.value})} />
+                  </div>
+                </div>
+
+                {/* ปุ่มกด */}
+                <div className="flex gap-3 pt-4">
+                  <button onClick={handleAddElder} className="flex-1 bg-[#00B041] text-white py-4 rounded-2xl font-bold shadow-lg shadow-green-100 hover:bg-green-600 transition active:scale-95">
+                    บันทึกข้อมูล
+                  </button>
+                  <button onClick={() => setIsAddingElder(false)} className="flex-1 bg-gray-50 text-gray-500 py-4 rounded-2xl font-bold hover:bg-gray-100 transition">
+                    ยกเลิก
+                  </button>
+                </div>
               </div>
-              <select className="w-full border p-3 rounded-xl text-sm" value={newElder.blood_type} onChange={e => setNewElder({...newElder, blood_type: e.target.value})}>
-                <option value="A">Group A</option><option value="B">Group B</option><option value="O">Group O</option><option value="AB">Group AB</option>
-              </select>
-              <input className="w-full border p-3 rounded-xl text-sm" placeholder="โรคประจำตัว" value={newElder.chronic_diseases} onChange={e => setNewElder({...newElder, chronic_diseases: e.target.value})} />
-              <textarea className="w-full border p-3 rounded-xl text-sm h-24" placeholder="ประวัติการแพ้ยา/อาหาร" value={newElder.allergies} onChange={e => setNewElder({...newElder, allergies: e.target.value})} />
-              <div className="flex gap-3 pt-4">
-                <button type="submit" className="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-green-700 transition">บันทึกข้อมูล</button>
-                <button type="button" onClick={() => setIsAddingElder(false)} className="flex-1 bg-gray-100 text-gray-500 py-3 rounded-xl font-bold transition">ยกเลิก</button>
-              </div>
-            </form>
-          </div>
-        )}
+            </div>
+          )}
       </div>
     </div>
   );
