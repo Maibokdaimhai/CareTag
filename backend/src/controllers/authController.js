@@ -192,7 +192,6 @@ exports.getPublicProfile = async (req, res) => {
     }
 };
 
-// 6. อัปเดตพิกัด และประเภทเหตุการณ์ + แจ้งเตือน LINE
 exports.updateScanLocation = async (req, res) => {
     try {
         const { elder_id, lat, lng, incident_type, helper_phone } = req.body;
@@ -205,16 +204,36 @@ exports.updateScanLocation = async (req, res) => {
 
         if (!latestLog) return res.status(404).json({ error: "ไม่พบข้อมูลการสแกน" });
 
-        // 2. อัปเดตข้อมูลพิกัดและรายละเอียดเหตุการณ์
-        await supabase.from('logs').update({ 
-            location_lat: lat || null, 
-            location_lng: lng || null, 
+        // 🟢 2. ปรับแต่งค่าพิกัดให้ปลอดภัยก่อนลง DB
+        // ป้องกัน Error กรณีมือถือส่งทศนิยมมายาวเกินไป หรือส่งมาเป็นข้อความ
+        let parsedLat = null;
+        let parsedLng = null;
+        
+        if (lat !== null && lat !== undefined) {
+            parsedLat = Number(parseFloat(lat).toFixed(8)); // ตัดให้เหลือทศนิยม 8 ตำแหน่งเป๊ะๆ
+        }
+        if (lng !== null && lng !== undefined) {
+            parsedLng = Number(parseFloat(lng).toFixed(8));
+        }
+
+        // 3. อัปเดตข้อมูลพิกัดและรายละเอียดเหตุการณ์
+        const { data: updatedData, error: updateError } = await supabase.from('logs').update({ 
+            location_lat: parsedLat, 
+            location_lng: parsedLng, 
             incident_type,
             helper_phone,
             log_status: 'notified'
-        }).eq('log_id', latestLog.log_id);
+        })
+        .eq('log_id', latestLog.log_id)
+        .select(); // ใส่ .select() เพื่อให้มันคืนค่ากลับมาเช็ค
 
-        // 3. ดึงข้อมูลเพื่อส่ง LINE แจ้งเตือนผู้ดูแล
+        // 🔴 สำคัญมาก: ถ้า Database ปฏิเสธการบันทึก มันจะฟ้องตรงนี้!
+        if (updateError) {
+            console.error("❌ Database Update Error:", updateError);
+            throw new Error(`บันทึกลงฐานข้อมูลไม่สำเร็จ: ${updateError.message}`);
+        }
+
+        // 4. ดึงข้อมูลเพื่อส่ง LINE แจ้งเตือนผู้ดูแล (เหมือนเดิม)
         const { data: elder } = await supabase
             .from('elders')
             .select(`elder_fname, elder_sname, elders_contacts ( profiles ( line_user_id ) )`)
@@ -222,7 +241,7 @@ exports.updateScanLocation = async (req, res) => {
             .single();
 
         if (elder) {
-            const mapUrl = lat ? `https://www.google.com/maps?q=${lat},${lng}` : 'ไม่ระบุพิกัด';
+            const mapUrl = lat ? `https://www.google.com/maps?q=$${lat},${lng}` : 'ไม่ระบุพิกัด';
             const alertMsg = `🆘 แจ้งเตือน! คุณ${elder.elder_fname} ${elder.elder_sname} : ${incident_type}\n⏰ เวลา: ${time}\n📍 พิกัด: ${mapUrl}\n📞 เบอร์ผู้ช่วยเหลือ: ${helper_phone || 'ไม่ได้ระบุ'}`;
 
             const lineIds = elder.elders_contacts
@@ -234,8 +253,9 @@ exports.updateScanLocation = async (req, res) => {
             }
         }
 
-        res.json({ message: 'บันทึกข้อมูลและส่งแจ้งเตือนเรียบร้อย' });
+        res.json({ message: 'บันทึกข้อมูลและส่งแจ้งเตือนเรียบร้อย', data: updatedData });
     } catch (err) {
+        console.error("❌ API Error:", err.message);
         res.status(500).json({ error: err.message });
     }
 };
