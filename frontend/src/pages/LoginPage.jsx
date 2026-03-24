@@ -29,7 +29,14 @@ const LoginPage = () => {
       setLoading(false);
     }
   };
-
+  
+  const validateLogin = () => {
+    if (!email || !password) {
+        alert("กรุณากรอกข้อมูลให้ครบ");
+        return false;
+    }
+    return true;
+  };
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
