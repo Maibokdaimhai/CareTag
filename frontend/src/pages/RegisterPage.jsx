@@ -2,9 +2,6 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import liff from '@line/liff';
-import { FaCheck } from "react-icons/fa";
-import { FaHome } from "react-icons/fa";
-import { MdLocalHospital } from "react-icons/md";
 
 
 const RegisterPage = () => {
