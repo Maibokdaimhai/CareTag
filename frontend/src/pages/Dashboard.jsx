@@ -226,7 +226,7 @@ return (
                 onClick={() => setIsAddingElder(true)} 
                 className="bg-green-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md hover:bg-green-700 transition cursor-pointer flex items-center gap-2"
               >
-                ➕ เพิ่มคนใหม่
+                ➕ เพิ่มคนใหม่1
               </button>
             </div>
 
