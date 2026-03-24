@@ -14,5 +14,6 @@ router.post('/update-location', authController.updateScanLocation);
 router.post('/report-emergency', authController.updateScanLocation);
 router.put('/update-profile', authMiddleware, authController.updateProfile);
 router.post('/add-elder', authMiddleware, authController.addElder);
+router.put('/delete-elder/:elder_id', authMiddleware, authController.deleteElder);
 
 module.exports = router;

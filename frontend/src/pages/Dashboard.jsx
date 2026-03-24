@@ -82,6 +82,21 @@ const Dashboard = () => {
     }
   };
 
+  const handleDeleteElder = async (elderId) => {
+    if (!window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลผู้สูงอายุท่านนี้?")) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${import.meta.env.VITE_API_URL}/api/auth/delete-elder/${elderId}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert('ลบข้อมูลเรียบร้อยแล้ว');
+      fetchData();
+    } catch (err) {
+      alert('เกิดข้อผิดพลาดในการลบข้อมูล');
+    }
+  };
+
   const handleGenerateTag = async (elderId) => {
     try {
       const token = localStorage.getItem('token');
@@ -164,6 +179,14 @@ const Dashboard = () => {
               {data?.elders?.length > 0 ? (
                 data.elders.map((elder) => (
                   <div key={elder.elder_id} className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6">
+                    <button 
+                      onClick={() => handleDeleteElder(elder.elder_id)}
+                      className="absolute top-4 right-4 text-red-300 hover:text-red-500 hover:bg-red-50 p-2 rounded-full transition"
+                      title="ลบข้อมูล"
+                    >
+                      🗑️
+                    </button>
+                    
                     {/* ข้อมูลสุขภาพ */}
                     <div className="flex-1 space-y-3 text-gray-600">
                       <h3 className="text-xl font-bold text-green-700 border-b pb-2">

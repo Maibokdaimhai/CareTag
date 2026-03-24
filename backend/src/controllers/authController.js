@@ -75,21 +75,27 @@ exports.getDashboardData = async (req, res) => {
     try {
         const userId = req.user.id;
 
-        // ดึงโปรไฟล์ผู้ดูแล
+        // 1. ดึงโปรไฟล์ผู้ดูแล
         const { data: profile } = await supabase
             .from('profiles').select('*').eq('profile_id', userId).single();
 
-        // ดึงข้อมูลผู้สูงอายุ "ทั้งหมด" ผ่านตาราง junction (เอา .single() ออก)
+        // 2. ดึงข้อมูลผู้สูงอายุ "ทั้งหมด" ผ่านตาราง junction
         const { data: junctionData } = await supabase
             .from('elders_contacts')
             .select(`elders ( * )`)
             .eq('profile_id', userId);
 
-        const elders = junctionData ? junctionData.map(j => j.elders) : [];
+        // 3. แปลงเป็น Array และ "กรอง" เอาเฉพาะคนที่สถานะเป็น active
+        const elders = junctionData 
+            ? junctionData
+                .map(j => j.elders)
+                // ตรวจสอบว่ามีข้อมูล และ e_status ต้องเป็น 'active' (หรือถ้าข้อมูลเก่าไม่มี e_status ก็ให้แสดงไปก่อน)
+                .filter(e => e && (e.e_status === 'active' || e.e_status == null)) 
+            : [];
 
         let logs = [];
         if (elders.length > 0) {
-            // ดึงประวัติการสแกนรวมของทุกคน 10 รายการล่าสุด
+            // 4. ดึงประวัติการสแกนรวมของทุกคน 10 รายการล่าสุด (เฉพาะคนที่ active)
             const elderIds = elders.map(e => e.elder_id);
             const { data: logData } = await supabase
                 .from('logs')
@@ -102,7 +108,7 @@ exports.getDashboardData = async (req, res) => {
 
         res.json({ 
             profile, 
-            elders: elders,
+            elders: elders, // ส่งข้อมูลที่กรองแล้วไปให้ Frontend
             recent_logs: logs
         });
     } catch (err) {
@@ -345,5 +351,22 @@ exports.addElder = async (req, res) => {
     } catch (err) {
         console.error("Final Error Catch:", err.message);
         res.status(400).json({ error: err.message });
+    }
+};
+
+exports.deleteElder = async (req, res) => {
+    try {
+        const { elder_id } = req.params;
+
+        const { error } = await supabase
+            .from('elders')
+            .update({ e_status: 'inactive' }) // เปลี่ยนสถานะแทนการลบ
+            .eq('elder_id', elder_id);
+
+        if (error) throw error;
+
+        res.json({ message: 'ลบข้อมูลสำเร็จ (สถานะเปลี่ยนเป็น inactive)' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 };
