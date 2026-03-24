@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import liff from '@line/liff';
+import { FaCheck } from "react-icons/fa";
+import { FaHome } from "react-icons/fa";
+import { MdLocalHospital } from "react-icons/md";
+
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -254,7 +258,7 @@ const RegisterPage = () => {
             </div>
 
             <div className="bg-green-50 p-3 rounded-lg border border-green-200 mb-4">
-              <p className="text-xs text-green-700 font-bold">✅ เชื่อมต่อ LINE สำเร็จ</p>
+              <p className="text-xs text-green-300 font-bold"><FaCheck size={12} color='white'/> เชื่อมต่อ LINE สำเร็จ</p>
               <p className="text-[10px] text-green-600 truncate">
                 ID: {formData.line_user_id || 'กำลังดึงข้อมูล...'}
               </p>
