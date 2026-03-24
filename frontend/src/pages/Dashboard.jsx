@@ -126,7 +126,7 @@ const Dashboard = () => {
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* ส่วนที่ 1: ข้อมูลผู้ดูแล (เหมือนอันเก่า 100%) */}
+          {/* ส่วนที่ 1: ข้อมูลผู้ดูแล*/}
           <div className="lg:col-span-1 bg-white p-6 rounded-3xl shadow-sm border border-gray-100 h-fit">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-gray-800">🏠 ข้อมูลผู้ดูแล</h2>
@@ -166,7 +166,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* ส่วนที่ 2: รายการผู้สูงอายุ (แบบหลายคน) */}
+          {/* ส่วนที่ 2: รายการผู้สูงอายุ*/}
           <div className="lg:col-span-2 space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold text-gray-800">👵 ผู้สูงอายุในความดูแล</h2>
@@ -178,7 +178,7 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 gap-6">
               {data?.elders?.length > 0 ? (
                 data.elders.map((elder) => (
-                  <div key={elder.elder_id} className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6">
+                  <div key={elder.elder_id} className="relative bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6">
                     <button 
                       onClick={() => handleDeleteElder(elder.elder_id)}
                       className="absolute top-4 right-4 text-red-300 hover:text-red-500 hover:bg-red-50 p-2 rounded-full transition"
