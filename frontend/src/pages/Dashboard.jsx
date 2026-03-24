@@ -3,6 +3,17 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { QRCodeCanvas } from 'qrcode.react';
 
+const thaiProvinces = [
+  "กรุงเทพมหานคร", "กระบี่", "กาญจนบุรี", "กาฬสินธุ์", "กำแพงเพชร", "ขอนแก่น", "จันทบุรี", "ฉะเชิงเทรา", "ชลบุรี", "ชัยนาท", 
+  "ชัยภูมิ", "ชุมพร", "เชียงราย", "เชียงใหม่", "ตรัง", "ตราด", "ตาก", "นครนายก", "นครปฐม", "นครพนม", "นครราชสีมา", 
+  "นครศรีธรรมราช", "นครสวรรค์", "นนทบุรี", "นราธิวาส", "น่าน", "บึงกาฬ", "บุรีรัมย์", "ปทุมธานี", "ประจวบคีรีขันธ์", 
+  "ปราจีนบุรี", "ปัตตานี", "พระนครศรีอยุธยา", "พะเยา", "พังงา", "พัทลุง", "พิจิตร", "พิษณุโลก", "เพชรบุรี", "เพชรบูรณ์", 
+  "แพร่", "ภูเก็ต", "มหาสารคาม", "มุกดาหาร", "แม่ฮ่องสอน", "ยโสธร", "ยะลา", "ร้อยเอ็ด", "ระนอง", "ระยอง", "ราชบุรี", 
+  "ลพบุรี", "ลำปาง", "ลำพูน", "เลย", "ศรีสะเกษ", "สกลนคร", "สงขลา", "สตูล", "สมุทรปราการ", "สมุทรสงคราม", "สมุทรสาคร", 
+  "สระแก้ว", "สระบุรี", "สิงห์บุรี", "สุโขทัย", "สุพรรณบุรี", "สุราษฎร์ธานี", "สุรินทร์", "หนองคาย", "หนองบัวลำภู", 
+  "อ่างทอง", "อำนาจเจริญ", "อุดรธานี", "อุตรดิตถ์", "อุทัยธานี", "อุบลราชธานี"
+];
+
 const Dashboard = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -126,7 +137,7 @@ const Dashboard = () => {
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* ส่วนที่ 1: ข้อมูลผู้ดูแล*/}
+          {/* ส่วนที่ 1: ข้อมูลผู้ดูแล */}
           <div className="lg:col-span-1 bg-white p-6 rounded-3xl shadow-sm border border-gray-100 h-fit">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-gray-800">🏠 ข้อมูลผู้ดูแล</h2>
@@ -151,6 +162,18 @@ const Dashboard = () => {
                   <input className="border p-2 rounded-xl text-sm" placeholder="เบอร์โทรหลัก" value={editForm.phone1} onChange={e => setEditForm({...editForm, phone1: e.target.value})} />
                   <input className="border p-2 rounded-xl text-sm" placeholder="ความสัมพันธ์" value={editForm.relation} onChange={e => setEditForm({...editForm, relation: e.target.value})} />
                   <textarea className="border p-2 rounded-xl text-sm" placeholder="ที่อยู่" value={editForm.address} onChange={e => setEditForm({...editForm, address: e.target.value})} />
+                  
+                  {/* Dropdown 77 จังหวัด */}
+                  <select 
+                    className="border p-2 rounded-xl text-sm bg-white" 
+                    value={editForm.province} 
+                    onChange={e => setEditForm({...editForm, province: e.target.value})}
+                  >
+                    <option value="">เลือกจังหวัด</option>
+                    {thaiProvinces.map(prov => (
+                      <option key={prov} value={prov}>{prov}</option>
+                    ))}
+                  </select>
                 </div>
               ) : (
                 <div className="space-y-3 text-sm">
@@ -159,18 +182,21 @@ const Dashboard = () => {
                   <p className="flex justify-between border-b pb-2"><strong>ความสัมพันธ์:</strong> <span>{data?.profile?.relation || '-'}</span></p>
                   <div className="pt-2">
                     <p className="text-xs font-bold text-gray-400 uppercase">ที่อยู่:</p>
-                    <p className="text-gray-700">{data?.profile?.address || 'ไม่ระบุ'} {data?.profile?.province}</p>
+                    <p className="text-gray-700">{data?.profile?.address || 'ไม่ระบุ'} จ.{data?.profile?.province || 'ไม่ระบุ'}</p>
                   </div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* ส่วนที่ 2: รายการผู้สูงอายุ*/}
+          {/* ส่วนที่ 2: รายการผู้สูงอายุ */}
           <div className="lg:col-span-2 space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold text-gray-800">👵 ผู้สูงอายุในความดูแล</h2>
-              <button onClick={() => setIsAddingElder(true)} className="bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md hover:bg-green-700 transition">
+              <button 
+                onClick={() => setIsAddingElder(true)} 
+                className="bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md hover:bg-green-700 transition"
+              >
                 ➕ เพิ่มคนใหม่
               </button>
             </div>
@@ -178,21 +204,26 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 gap-6">
               {data?.elders?.length > 0 ? (
                 data.elders.map((elder) => (
-                  <div key={elder.elder_id} className="relative bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6">
-                    <button 
-                      onClick={() => handleDeleteElder(elder.elder_id)}
-                      className="absolute top-4 right-4 text-red-300 hover:text-red-500 hover:bg-red-50 p-2 rounded-full transition"
-                      title="ลบข้อมูล"
-                    >
-                      🗑️
-                    </button>
+                  <div key={elder.elder_id} className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6">
                     
                     {/* ข้อมูลสุขภาพ */}
                     <div className="flex-1 space-y-3 text-gray-600">
-                      <h3 className="text-xl font-bold text-green-700 border-b pb-2">
-                        {elder.elder_fname} {elder.elder_sname}
-                      </h3>
-                      <div className="grid grid-cols-2 gap-2 text-sm">
+                      
+                      {/* 🔴 นำปุ่มลบมาจัด Layout ด้วย Flex ตรงส่วน Header */}
+                      <div className="flex justify-between items-start border-b pb-2">
+                        <h3 className="text-xl font-bold text-green-700">
+                          {elder.elder_fname} {elder.elder_sname}
+                        </h3>
+                        <button 
+                          onClick={() => handleDeleteElder(elder.elder_id)}
+                          className="text-red-300 hover:text-red-600 hover:bg-red-50 p-2 rounded-full transition flex-shrink-0"
+                          title="ลบข้อมูล"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-sm pt-2">
                         <p><strong>กรุ๊ปเลือด:</strong> <span className="text-red-500 font-bold">{elder.blood_type}</span></p>
                         <p><strong>สิทธิรักษา:</strong> {elder.medical_rights || '-'}</p>
                       </div>
@@ -220,7 +251,7 @@ const Dashboard = () => {
                               link.download = `CareTag-${elder.elder_fname}.png`;
                               link.click();
                             }} 
-                            className="text-green-600 text-xs font-bold hover:underline flex items-center gap-1"
+                            className="text-green-600 text-xs font-bold hover:underline flex items-center gap-1 justify-center w-full"
                           >
                             🖨️ ดาวน์โหลด/พิมพ์
                           </button>
@@ -228,7 +259,7 @@ const Dashboard = () => {
                       ) : (
                         <button 
                           onClick={() => handleGenerateTag(elder.elder_id)} 
-                          className="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md hover:bg-blue-700"
+                          className="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md hover:bg-blue-700 w-full"
                         >
                           สร้าง CareTag
                         </button>
@@ -286,7 +317,6 @@ const Dashboard = () => {
                 <h3 className="text-2xl font-bold text-gray-800 mb-2">เพิ่มผู้สูงอายุในดูแล</h3>
                 
                 <div className="space-y-4">
-                  {/* แถวที่ 1: ชื่อ - ชื่อกลาง - นามสกุล */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div className="space-y-1">
                       <label className="text-[10px] font-bold text-gray-400 uppercase ml-2">ชื่อ*</label>
@@ -302,7 +332,6 @@ const Dashboard = () => {
                     </div>
                   </div>
 
-                  {/* แถวที่ 2: กรุ๊ปเลือด และ สิทธิการรักษา */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div className="space-y-1">
                       <label className="text-[10px] font-bold text-gray-400 uppercase ml-2">กรุ๊ปเลือด</label>
@@ -319,20 +348,17 @@ const Dashboard = () => {
                     </div>
                   </div>
 
-                  {/* แถวที่ 3: โรคประจำตัว */}
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-gray-400 uppercase ml-2">โรคประจำตัว</label>
                     <input className="w-full p-3 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-green-500 outline-none transition text-sm shadow-sm" placeholder="ระบุโรคประจำตัว" value={newElder.chronic_diseases} onChange={e => setNewElder({...newElder, chronic_diseases: e.target.value})} />
                   </div>
 
-                  {/* แถวที่ 4: ประวัติการแพ้ */}
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-gray-400 uppercase ml-2">ประวัติการแพ้ยา/อาหาร</label>
                     <textarea className="w-full p-3 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-green-500 outline-none transition text-sm shadow-sm h-24 resize-none" placeholder="ระบุสิ่งที่แพ้และอาการ" value={newElder.allergies} onChange={e => setNewElder({...newElder, allergies: e.target.value})} />
                   </div>
                 </div>
 
-                {/* ปุ่มกด */}
                 <div className="flex gap-3 pt-4">
                   <button onClick={handleAddElder} className="flex-1 bg-[#00B041] text-white py-4 rounded-2xl font-bold shadow-lg shadow-green-100 hover:bg-green-600 transition active:scale-95">
                     บันทึกข้อมูล
