@@ -31,7 +31,7 @@ exports.signUp = async (req, res) => {
                 postal_code,
                 line_user_id // <-- บันทึก ID ของผู้ดูแลลงฐานข้อมูลที่นี่!
             }]);
-        if (profileError) throw profileError;
+        if (Error) throw profileError;
 
         // ... (ส่วนบันทึกข้อมูล Elders และ elders_contacts เหมือนเดิมที่คุณเขียนไว้) ...
         
