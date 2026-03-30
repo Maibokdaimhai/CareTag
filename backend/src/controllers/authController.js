@@ -241,7 +241,7 @@ exports.updateScanLocation = async (req, res) => {
             .single();
 
         if (elder) {
-            const mapUrl = lat ? `https://www.google.com/maps?q=$${lat},${lng}` : 'ไม่ระบุพิกัด';
+            const mapUrl = lat ? `https://www.google.com/maps?q=${lat},${lng}` : 'ไม่ระบุพิกัด';
             const alertMsg = `🆘 แจ้งเตือน! คุณ${elder.elder_fname} ${elder.elder_sname} : ${incident_type}\n⏰ เวลา: ${time}\n📍 พิกัด: ${mapUrl}\n📞 เบอร์ผู้ช่วยเหลือ: ${helper_phone || 'ไม่ได้ระบุ'}`;
 
             const lineIds = elder.elders_contacts
