@@ -10,6 +10,7 @@ router.post('/update-password', authController.updatePassword);
 router.get('/dashboard', authMiddleware, authController.getDashboardData);
 router.post('/generate-tag', authMiddleware, authController.generateTag);
 router.get('/scan/:tag_id', authController.getPublicProfile);
+router.get('/map-access/:token', authController.redirectToProtectedMap);
 router.post('/update-location', authController.updateScanLocation);
 router.post('/report-emergency', authController.updateScanLocation);
 router.put('/update-profile', authMiddleware, authController.updateProfile);

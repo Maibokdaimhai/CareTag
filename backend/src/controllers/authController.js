@@ -1,6 +1,77 @@
 const supabase = require('../config/supabase');
 const lineService = require('../services/lineService');
 const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto');
+
+const thailandTimeFormatter = new Intl.DateTimeFormat('th-TH', {
+    timeZone: 'Asia/Bangkok',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+});
+const MAP_LINK_TTL_MS = 2 * 60 * 60 * 1000;
+
+const getMapLinkSecret = () => {
+    const secret = process.env.MAP_LINK_SECRET || process.env.LINE_CHANNEL_ACCESS_TOKEN;
+
+    if (!secret) {
+        throw new Error('MAP_LINK_SECRET หรือ LINE_CHANNEL_ACCESS_TOKEN ต้องถูกตั้งค่าก่อนใช้งานลิงก์พิกัด');
+    }
+
+    return secret;
+};
+
+const toBase64Url = (value) => Buffer.from(value).toString('base64url');
+const fromBase64Url = (value) => Buffer.from(value, 'base64url').toString('utf8');
+
+const createMapAccessToken = (payload) => {
+    const payloadString = JSON.stringify(payload);
+    const encodedPayload = toBase64Url(payloadString);
+    const signature = crypto
+        .createHmac('sha256', getMapLinkSecret())
+        .update(encodedPayload)
+        .digest('base64url');
+
+    return `${encodedPayload}.${signature}`;
+};
+
+const verifyMapAccessToken = (token) => {
+    const [encodedPayload, signature] = token.split('.');
+
+    if (!encodedPayload || !signature) {
+        throw new Error('invalid_token');
+    }
+
+    const expectedSignature = crypto
+        .createHmac('sha256', getMapLinkSecret())
+        .update(encodedPayload)
+        .digest('base64url');
+
+    const signatureBuffer = Buffer.from(signature);
+    const expectedBuffer = Buffer.from(expectedSignature);
+
+    if (
+        signatureBuffer.length !== expectedBuffer.length ||
+        !crypto.timingSafeEqual(signatureBuffer, expectedBuffer)
+    ) {
+        throw new Error('invalid_token');
+    }
+
+    const payload = JSON.parse(fromBase64Url(encodedPayload));
+
+    if (!payload.exp || Date.now() > payload.exp) {
+        throw new Error('expired_token');
+    }
+
+    return payload;
+};
+
+const getApiBaseUrl = (req) => {
+    if (process.env.BACKEND_PUBLIC_URL) return process.env.BACKEND_PUBLIC_URL;
+    if (process.env.RENDER_EXTERNAL_URL) return process.env.RENDER_EXTERNAL_URL;
+
+    return `${req.protocol}://${req.get('host')}`;
+};
 
 // 1. สมัครสมาชิกพร้อมลงทะเบียนผู้สูงอายุ
 exports.signUp = async (req, res) => {
@@ -195,7 +266,7 @@ exports.getPublicProfile = async (req, res) => {
 exports.updateScanLocation = async (req, res) => {
     try {
         const { elder_id, lat, lng, incident_type, helper_phone } = req.body;
-        const time = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+        const time = thailandTimeFormatter.format(new Date());
 
         // 1. หา Log ล่าสุดที่เพิ่งสร้างจากการสแกน
         const { data: latestLog } = await supabase
@@ -241,7 +312,20 @@ exports.updateScanLocation = async (req, res) => {
             .single();
 
         if (elder) {
-            const mapUrl = lat ? `https://www.google.com/maps?q=${lat},${lng}` : 'ไม่ระบุพิกัด';
+            let mapUrl = 'ไม่ระบุพิกัด';
+
+            if (parsedLat !== null && parsedLng !== null) {
+                const mapAccessToken = createMapAccessToken({
+                    elderId: elder_id,
+                    logId: latestLog.log_id,
+                    lat: parsedLat,
+                    lng: parsedLng,
+                    exp: Date.now() + MAP_LINK_TTL_MS
+                });
+                const apiBaseUrl = getApiBaseUrl(req);
+                mapUrl = `${apiBaseUrl}/api/auth/map-access/${mapAccessToken}`;
+            }
+
             const alertMsg = `🆘 แจ้งเตือน! คุณ${elder.elder_fname} ${elder.elder_sname} : ${incident_type}\n⏰ เวลา: ${time}\n📍 พิกัด: ${mapUrl}\n📞 เบอร์ผู้ช่วยเหลือ: ${helper_phone || 'ไม่ได้ระบุ'}`;
 
             const lineIds = elder.elders_contacts
@@ -257,6 +341,25 @@ exports.updateScanLocation = async (req, res) => {
     } catch (err) {
         console.error("❌ API Error:", err.message);
         res.status(500).json({ error: err.message });
+    }
+};
+
+exports.redirectToProtectedMap = async (req, res) => {
+    try {
+        const { token } = req.params;
+        const payload = verifyMapAccessToken(token);
+
+        if (payload.lat === undefined || payload.lng === undefined) {
+            return res.status(400).send('ลิงก์พิกัดไม่ถูกต้อง');
+        }
+
+        return res.redirect(`https://www.google.com/maps?q=${payload.lat},${payload.lng}`);
+    } catch (err) {
+        if (err.message === 'expired_token') {
+            return res.status(410).send('ลิงก์พิกัดหมดอายุแล้ว');
+        }
+
+        return res.status(400).send('ลิงก์พิกัดไม่ถูกต้อง');
     }
 };
 

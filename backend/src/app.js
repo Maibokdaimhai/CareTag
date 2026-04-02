@@ -4,6 +4,7 @@ const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
 
 const app = express();
+app.set('trust proxy', true);
 
 // 2. ตั้งค่า CORS ให้ยืดหยุ่น
 const corsOptions = {
